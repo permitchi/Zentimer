@@ -1,5 +1,6 @@
 package com.example.zentimer
 
+import android.content.ContentResolver
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,14 +26,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.zentimer.ui.theme.ZentimerTheme
@@ -41,7 +46,8 @@ import androidx.navigation.compose.composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import kotlinx.coroutines.delay
-
+import android.net.Uri
+import androidx.compose.material3.AlertDialog
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +80,6 @@ fun AppNav() {
                 time = time,
                 music = music,
                 onBackClick = { navController.popBackStack() })
-
         }
     }
 }
@@ -86,20 +91,8 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
     val timerOptions = listOf("10:00", "20:00", "30:00")
     var selectedOption by remember { mutableStateOf(timerOptions[0]) }
     var expanded by remember { mutableStateOf(false) }
-    val musicOptions = listOf(
-        "Epic Battle Theme",
-        "Chill LoFi Beats",
-        "Upbeat Pop Track",
-        "Classical Piano",
-        "Rock Anthem",
-        "Jazz Lounge",
-        "Electronic Dance",
-        "Acoustic Guitar",
-        "Orchestral Score",
-        "Hip Hop Beat"
-    )
+    val musicOptions = listOf("Rain", "Waves", "Forest", "River")
     var selectedMusic by remember { mutableStateOf(musicOptions[0]) }
-
 
     Scaffold(
         topBar = {
@@ -148,58 +141,96 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
 
             Button(onClick = { expanded = !expanded }) {
                 Text(selectedMusic)
+            }
 
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .heightIn(max = 150.dp)
-                        .zIndex(1f)
-                ) {
-                    musicOptions.forEach { musicName ->
-                        DropdownMenuItem(
-                            text = { Text(musicName) },
-                            modifier = Modifier.height(56.dp),
-                            onClick = {
-                                selectedMusic = musicName
-                                expanded = false
-                            }
-                        )
-                    }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .heightIn(max = 150.dp)
+                    .zIndex(1f)
+            ) {
+                musicOptions.forEach { musicName ->
+                    DropdownMenuItem(
+                        text = { Text(musicName) },
+                        modifier = Modifier.height(56.dp),
+                        onClick = {
+                            selectedMusic = musicName
+                            expanded = false
+                        }
+                    )
                 }
             }
 
-                //Start Meditasi button
-                Button(onClick = { onStartClick(selectedOption, selectedMusic) }) {
-                    Text("Start Meditation")
-                }
+            //Start Meditasi button
+            Button(onClick = { onStartClick(selectedOption, selectedMusic) }) {
+                Text("Start Meditation")
             }
         }
     }
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+
     val (minutes, seconds) = time.split(':').map { it.toInt() }
     val initialSeconds = minutes * 60 + seconds
     var remainingSeconds by remember { mutableIntStateOf(initialSeconds) }
-    var isRunning by remember { mutableStateOf(false) }
+    var isRunning by remember { mutableStateOf(true) }
+
+    val context = LocalContext.current
+    val exoPlayer = remember { ExoPlayer.Builder(context).build() }
+
+    DisposableEffect(music) {
+        val musicResourceId = when(music.lowercase()) {
+            "rain" -> R.raw.rain
+            "waves" -> R.raw.waves
+            "forest" -> R.raw.forest
+            "river" -> R.raw.river
+            else -> 0
+        }
+
+        if (musicResourceId != 0) {
+            val rawUri = Uri.Builder()
+                .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+                .authority(context.packageName)
+                .appendEncodedPath("raw/${music.lowercase()}")
+                .build()
+
+            val mediaItem = MediaItem.fromUri(rawUri)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.repeatMode = ExoPlayer.REPEAT_MODE_ONE // loop the music
+            exoPlayer.prepare()
+        }
+
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
 
     LaunchedEffect(isRunning) {
-        while (isRunning && remainingSeconds > 0) {
-            delay(1000L)
-            remainingSeconds--
-        }
-        if (remainingSeconds == 0) {
-            // auto-stop when finished
-            isRunning = false
+        if (isRunning) {
+            exoPlayer.play()
+            while (isRunning && remainingSeconds > 0) {
+                delay(1000L)
+                remainingSeconds--
+            }
+            if (remainingSeconds == 0) {
+                // auto-stop when finished
+                isRunning = false
+            }
+            exoPlayer.pause() // Pause when timer stops or is paused by user
+        } else {
+            exoPlayer.pause()
         }
     }
     Scaffold(
         topBar = {
             TopAppBar(
-
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
@@ -211,9 +242,29 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                     ) {
                         Text("Zentimer")
 
-                        IconButton(onBackClick) {
+                        IconButton(onClick = {showDialog = true}) {
                             Text("X")
                         }
+                    }
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            title = { Text("Stop Session") },
+                            text = { Text("Are you sure you want to stop this session?") },
+                            dismissButton = {
+                                Button(onClick = { showDialog = false }) {
+                                    Text("No")
+                                }
+                            },
+                            confirmButton = {
+                                Button(onClick = {
+                                    onBackClick()
+                                    showDialog = false
+                                }) {
+                                    Text("Yes")
+                                }
+                            }
+                        )
                     }
                 },
             )
@@ -245,6 +296,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                     onClick = {
                         remainingSeconds = initialSeconds
                         isRunning = false
+                        exoPlayer.seekTo(0)
                     }
                 ) {
                     Text("Reset")
