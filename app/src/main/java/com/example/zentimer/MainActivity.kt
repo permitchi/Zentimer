@@ -88,9 +88,22 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.core.graphics.component1
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import com.example.zentimer.R
+
+val MyCustomFont = FontFamily(
+    Font(R.font.poppins_medium, FontWeight.Normal),
+    Font(R.font.star_cartoon, FontWeight.Bold)
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -128,7 +141,7 @@ fun AppNav() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StartScreen(onStartClick: (String, String) -> Unit) {
-    val timerOptions = listOf("10:00", "20:00", "30:00")
+    val timerOptions = listOf("05:00", "10:00", "15:00")
     var selectedOption by remember { mutableStateOf(timerOptions[0]) }
 //    var expanded by remember { mutableStateOf(false) }
     val musicOptions = listOf(
@@ -151,7 +164,8 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                 ),
                 title = {
                     Text(
-                        "Zentimer",
+                        "ZenTimer",
+                        fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -173,6 +187,7 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
             Text(
                 text = "Set Duration:",
                 color = Color.White,
+                fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 modifier = Modifier.padding(bottom = 20.dp)
@@ -189,12 +204,16 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                         .height(60.dp)
                         .shadow(if (isSelected) 12.dp else 2.dp, RoundedCornerShape(16.dp)),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) Color(0xFFB3D7EE) else Color(0xFFD1E5F0),
+                        containerColor = if (isSelected) Color(0xFF4A9ACB) else Color(0xFFD8E7EE),
                         contentColor = Color.Black
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(text = option, fontSize = 18.sp)
+                    Text(text = option,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 20.sp,
+                        )
                 }
             }
 
@@ -203,6 +222,7 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                 Text(
                     text = "Set Sound:",
                     color = Color.White,
+                    fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
                     modifier = Modifier.padding(bottom = 20.dp, top = 20.dp)
@@ -222,11 +242,10 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                                 onClick = { selectedMusicName = name },
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) Color(0xFFD1E5F0) else Color(
-                                        0xFFD1E5F0
-                                    ).copy(alpha = 0.8f)
+                                    containerColor = if (isSelected) Color(0xFF4A9ACB) else Color(
+                                        0xFFD8E7EE)
                                 ),
-                                border = if (isSelected) BorderStroke(3.dp, Color.White) else null,
+                                border = if (isSelected) BorderStroke(3.dp, Color(0xFF001A3F)) else null,
                                 modifier = Modifier
                                     .aspectRatio(1f)
                                     .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp))
@@ -246,8 +265,9 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                                     Text(
                                         text = name,
                                         color = Color(0xFF001A3F),
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 20.sp
                                     )
                                 }
                             }
@@ -262,17 +282,18 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp),
-                    shape = RoundedCornerShape(30.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
+                        containerColor = Color(0xFF4A9ACB),
                         contentColor = Color(0xFF001A3F)
                     ),
                     elevation = ButtonDefaults.buttonElevation(8.dp)
                 ) {
                     Text(
                         "Start Meditation",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 28.sp,
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Normal
                     )
                 }
 
@@ -360,7 +381,10 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                     titleContentColor = Color(0xFF001A3F),
                     navigationIconContentColor = Color(0xFF001A3F)
                 ),
-                title = { Text("Zentimer", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text("ZenTimer",
+                        fontFamily = MyCustomFont,
+                        fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { showDialog = true }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -373,24 +397,63 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Stop Session") },
-                text = { Text("Are you sure you want to stop this session?") },
-                dismissButton = {
-                    TextButton(onClick = { showDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F))) {
-                        Text("No")
+                title = {
+                    // Judul rata tengah
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     }
                 },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            showDialog = false
-                            onBackClick()
-                        },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally // Memastikan semua isi Column di tengah
                     ) {
-                        Text("Yes")
+                        Text(
+                            text = "Are you sure you want to stop this session?",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
+
+                        // Row untuk menempatkan tombol berdampingan di tengah
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center, // Membuat tombol ke tengah horizontal
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            // Tombol YES (Border Only)
+                            OutlinedButton(
+                                onClick = {
+                                    showDialog = false
+                                    onBackClick()
+                                },
+                                border = BorderStroke(1.dp, Color(0xFF001A3F)),
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier
+                                    .weight(1f) // Memberi ukuran seimbang
+                                    .height(48.dp)
+                            ) {
+                                Text("Yes", color = Color(0xFF001A3F))
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Button(
+                                onClick = { showDialog = false },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F)),
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier
+                                    .weight(1f) // Memberi ukuran seimbang
+                                    .height(48.dp)
+                            ) {
+                                Text("No", color = Color.White)
+                            }
+                        }
                     }
-                }
+                },
+                confirmButton = {},
+                dismissButton = {},
+                containerColor = Color(0xFFE6EBF2)
             )
         }
 
@@ -408,12 +471,15 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 text = formatTime(remainingSeconds),
                 style = MaterialTheme.typography.displayMedium,
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal
             )
             Text(
                 text = "Playing: $music",
                 color = Color.White.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Normal
             )
 
             Spacer(Modifier.height(60.dp))
@@ -440,7 +506,8 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                         Text(
                             text = if (isBreathingIn) "Breath In" else "Breath Out",
                             color = Color(0xFF001A3F),
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Normal,
                             fontSize = 20.sp
                         )
                     }
@@ -463,7 +530,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
 
             Spacer(Modifier.height(80.dp))
 
-            //TOMBOL KONTROL
             Row(
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
