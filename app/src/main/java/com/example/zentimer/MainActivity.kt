@@ -47,7 +47,47 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import kotlinx.coroutines.delay
 import android.net.Uri
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Water
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.core.graphics.component1
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,81 +130,153 @@ fun AppNav() {
 fun StartScreen(onStartClick: (String, String) -> Unit) {
     val timerOptions = listOf("10:00", "20:00", "30:00")
     var selectedOption by remember { mutableStateOf(timerOptions[0]) }
-    var expanded by remember { mutableStateOf(false) }
-    val musicOptions = listOf("Rain", "Waves", "Forest", "River")
-    var selectedMusic by remember { mutableStateOf(musicOptions[0]) }
+//    var expanded by remember { mutableStateOf(false) }
+    val musicOptions = listOf(
+        "Rain" to Icons.Default.Cloud,
+        "Wave" to Icons.Default.Water,
+        "Forest" to Icons.Default.Park,
+        "River" to Icons.Default.Opacity
+    )
+    var selectedMusicName by remember { mutableStateOf(musicOptions[0].first) }
+    val scrollState = rememberScrollState()
 
     Scaffold(
+        containerColor = Color(0xFF001A3F),
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color(0xFF001A3F),
+                    navigationIconContentColor = Color(0xFF001A3F)
                 ),
                 title = {
-                    Text("Zentimer")
-                }
-
+                    Text(
+                        "Zentimer",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .verticalScroll(state = scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
-            timerOptions.forEach { text ->
-                val isSelected = text == selectedOption
 
-                //Timer Option
-                Row(
-                    //posisi buttons options
+            // Masukkan komponen DurationPicker yang tadi dibuat
+            Text(
+                text = "Set Duration:",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                modifier = Modifier.padding(bottom = 20.dp)
+            )
+
+            timerOptions.forEach { option ->
+                val isSelected = (selectedOption == option)
+
+                Button(
+                    onClick = { selectedOption = option },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .height(60.dp)
+                        .shadow(if (isSelected) 12.dp else 2.dp, RoundedCornerShape(16.dp)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isSelected) Color(0xFFB3D7EE) else Color(0xFFD1E5F0),
+                        contentColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Button(
-                        onClick = { selectedOption = text },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceVariant
-                        )
+                    Text(text = option, fontSize = 18.sp)
+                }
+            }
+
+            //pick music
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Set Sound:",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    modifier = Modifier.padding(bottom = 20.dp, top = 20.dp)
+                )
+
+                Box(modifier = Modifier.height(380.dp)) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        userScrollEnabled = false
                     ) {
-                        Text(
-                            text = text,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        items(musicOptions) { (name, icon) ->
+                            val isSelected = selectedMusicName == name
+
+                            Card(
+                                onClick = { selectedMusicName = name },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) Color(0xFFD1E5F0) else Color(
+                                        0xFFD1E5F0
+                                    ).copy(alpha = 0.8f)
+                                ),
+                                border = if (isSelected) BorderStroke(3.dp, Color.White) else null,
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp))
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = name,
+                                        modifier = Modifier.size(48.dp),
+                                        tint = Color(0xFF001A3F)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = name,
+                                        color = Color(0xFF001A3F),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-            }
-            //Dropdown pick music
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Button(onClick = { expanded = !expanded }) {
-                Text(selectedMusic)
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .heightIn(max = 150.dp)
-                    .zIndex(1f)
-            ) {
-                musicOptions.forEach { musicName ->
-                    DropdownMenuItem(
-                        text = { Text(musicName) },
-                        modifier = Modifier.height(56.dp),
-                        onClick = {
-                            selectedMusic = musicName
-                            expanded = false
-                        }
+                //Start Meditasi button
+                Button(
+                    onClick = { onStartClick(selectedOption, selectedMusicName) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color(0xFF001A3F)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(8.dp)
+                ) {
+                    Text(
+                        "Start Meditation",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
 
-            //Start Meditasi button
-            Button(onClick = { onStartClick(selectedOption, selectedMusic) }) {
-                Text("Start Meditation")
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -211,7 +323,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
         }
     }
 
-
     LaunchedEffect(isRunning) {
         if (isRunning) {
             exoPlayer.play()
@@ -228,78 +339,168 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
             exoPlayer.pause()
         }
     }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        Text("Zentimer")
 
-                        IconButton(onClick = {showDialog = true}) {
-                            Text("X")
-                        }
-                    }
-                    if (showDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showDialog = false },
-                            title = { Text("Stop Session") },
-                            text = { Text("Are you sure you want to stop this session?") },
-                            dismissButton = {
-                                Button(onClick = { showDialog = false }) {
-                                    Text("No")
-                                }
-                            },
-                            confirmButton = {
-                                Button(onClick = {
-                                    onBackClick()
-                                    showDialog = false
-                                }) {
-                                    Text("Yes")
-                                }
-                            }
-                        )
+    val infiniteTransition = rememberInfiniteTransition(label = "breathing")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(4000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    Scaffold(
+        containerColor = Color(0xFF001A3F), // Background Biru Gelap
+        topBar = {
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color(0xFF001A3F),
+                    navigationIconContentColor = Color(0xFF001A3F)
+                ),
+                title = { Text("Zentimer", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { showDialog = true }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = { Spacer(modifier = Modifier.width(48.dp)) }
             )
         }
     ) { innerPadding ->
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Stop Session") },
+                text = { Text("Are you sure you want to stop this session?") },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F))) {
+                        Text("No")
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDialog = false
+                            onBackClick()
+                        },
+                    ) {
+                        Text("Yes")
+                    }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Spacer(Modifier.height(32.dp))
-            Text(text = formatTime(remainingSeconds))
-            Spacer(Modifier.height(16.dp))
-            Text(text = "Playing: $music")
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(40.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Play/Pause toggle
+            // Display Waktu
+            Text(
+                text = formatTime(remainingSeconds),
+                style = MaterialTheme.typography.displayMedium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Playing: $music",
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(Modifier.height(60.dp))
+
+            //Breathing Effect
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(250.dp)) {
+                if (isRunning && remainingSeconds > 0) {
+                    // Glow effect (Lingkaran Luar)
+                    Box(
+                        modifier = Modifier
+                            .size(200.dp)
+                            .graphicsLayer(scaleX = scale, scaleY = scale)
+                            .background(Color(0xFFD1E5F0).copy(alpha = 0.2f), CircleShape)
+                    )
+                    // Lingkaran Utama
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .graphicsLayer(scaleX = scale, scaleY = scale)
+                            .background(Color(0xFFD1E5F0), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val isBreathingIn = (remainingSeconds % 8) >= 4
+                        Text(
+                            text = if (isBreathingIn) "Breath In" else "Breath Out",
+                            color = Color(0xFF001A3F),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    }
+                } else {
+                    // Tampilan saat Pause atau Done
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .background(Color.White.copy(alpha = 0.1f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (remainingSeconds == 0) "Done" else "Paused",
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(80.dp))
+
+            //TOMBOL KONTROL
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Button Play/Pause
                 Button(
                     onClick = { isRunning = !isRunning },
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD1E5F0)),
+                    modifier = Modifier.size(88.dp),
+                    elevation = ButtonDefaults.buttonElevation(8.dp)
                 ) {
-                    Text(if (isRunning) "Pause" else "Play")
+                    Icon(
+                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Control",
+                        tint = Color(0xFF001A3F),
+                        modifier = Modifier.size(40.dp)
+                    )
                 }
 
-                // Stop/Reset
-                Button(
+                // Button Reset
+                IconButton(
                     onClick = {
                         remainingSeconds = initialSeconds
                         isRunning = false
-                        exoPlayer.seekTo(0)
-                    }
+                        exoPlayer.seekTo(0) // Reset musik ke awal
+                    },
+                    modifier = Modifier
+                        .size(88.dp)
+                        .background(Color.White.copy(alpha = 0.1f), CircleShape)
                 ) {
-                    Text("Reset")
+                    Icon(
+                        imageVector = Icons.Default.Stop,
+                        contentDescription = "Reset",
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
+                    )
                 }
             }
         }

@@ -54,6 +54,8 @@ dependencies {
     implementation(libs.androidx.compose.runtime)
     implementation("androidx.media3:media3-exoplayer:1.9.0")
     implementation("androidx.media3:media3-session:1.9.0")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
