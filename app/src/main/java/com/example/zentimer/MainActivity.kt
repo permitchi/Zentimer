@@ -76,6 +76,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -95,6 +96,8 @@ val MyCustomFont = FontFamily(
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -147,7 +150,11 @@ fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Uni
 
         AlertDialog(
             onDismissRequest = { viewModel.onCustomTimeDialogDismissed() },
-            title = { Text("Set Custom Time", fontFamily = MyCustomFont, fontWeight = FontWeight.Bold) },
+            title = {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text("Set Custom Time", fontFamily = MyCustomFont, fontWeight = FontWeight.Bold)
+                }
+            },
             text = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -433,60 +440,57 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 onDismissRequest = { showDialog = false },
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF001A3F))
+                        Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF001A3F), fontFamily = MyCustomFont)
                     }
                 },
                 text = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(
                             text = "Are you sure you want to stop this session?",
                             color = Color(0xFF001A3F),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 24.dp)
-
+                            fontFamily = MyCustomFont
                         )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                    }
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                showDialog = false
+                                onBackClick()
+                            },
+                            border = BorderStroke(1.dp, Color(0xFF001A3F)),
+                            shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
                         ) {
+                            Text("Yes", color = Color(0xFF001A3F), fontFamily = MyCustomFont)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
 
-                            OutlinedButton(
-                                onClick = {
-                                    showDialog = false
-                                    onBackClick()
-                                },
-                                border = BorderStroke(1.dp, Color(0xFF001A3F)),
-                                shape = RoundedCornerShape(24.dp),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Text("Yes", color = Color(0xFF001A3F))
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Button(
-                                onClick = { showDialog = false },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F)),
-                                shape = RoundedCornerShape(24.dp),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Text("No", color = Color.White)
-                            }
+                        Button(
+                            onClick = { showDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F)),
+                            shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                        ) {
+                            Text("No", color = Color.White, fontFamily = MyCustomFont)
                         }
                     }
                 },
-                confirmButton = {},
-                dismissButton = {},
-                containerColor = Color(0xFFE6EBF2)
+                dismissButton = null,
+                containerColor = Color(0xFFE6EBF2),
+                shape = RoundedCornerShape(28.dp)
             )
         }
 
