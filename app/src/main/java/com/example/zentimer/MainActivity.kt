@@ -223,7 +223,6 @@ fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Uni
             verticalArrangement = Arrangement.Top
         ) {
 
-            // Masukkan komponen DurationPicker yang tadi dibuat
             Text(
                 text = "Set Duration:",
                 color = Color.White,
@@ -257,7 +256,6 @@ fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Uni
                 }
             }
 
-            //pick music
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Set Sound:",
@@ -265,7 +263,7 @@ fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Uni
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    modifier = Modifier.padding(bottom = 20.dp, top = 20.dp)
+                    modifier = Modifier.padding(bottom = 20.dp, top = 50.dp)
                 )
 
                 Box(modifier = Modifier.height(380.dp)) {
@@ -316,7 +314,6 @@ fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Uni
                 }
                 Spacer(modifier = Modifier.height(32.dp))
 
-                //Start Meditasi button
                 Button(
                     onClick = { onStartClick(selectedOption, selectedMusicName) },
                     modifier = Modifier
@@ -376,7 +373,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
             val uri = Uri.parse("${ContentResolver.SCHEME_ANDROID_RESOURCE}://${context.packageName}/$resourceId")
             val mediaItem = MediaItem.fromUri(uri)
             exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.repeatMode = ExoPlayer.REPEAT_MODE_ONE // loop the music
+            exoPlayer.repeatMode = ExoPlayer.REPEAT_MODE_ONE
             exoPlayer.prepare()
         }
 
@@ -393,10 +390,9 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 remainingSeconds--
             }
             if (remainingSeconds == 0) {
-                // auto-stop when finished
                 isRunning = false
             }
-            exoPlayer.pause() // Pause when timer stops or is paused by user
+            exoPlayer.pause()
         } else {
             exoPlayer.pause()
         }
@@ -414,7 +410,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
     )
 
     Scaffold(
-        containerColor = Color(0xFF001A3F), // Background Biru Gelap
+        containerColor = Color(0xFF001A3F),
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -439,7 +435,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = {
-                    // Judul rata tengah
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF001A3F))
                     }
@@ -447,7 +442,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 text = {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally // Memastikan semua isi Column di tengah
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = "Are you sure you want to stop this session?",
@@ -457,14 +452,12 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
 
                         )
 
-                        // Row untuk menempatkan tombol berdampingan di tengah
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center, // Membuat tombol ke tengah horizontal
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
 
-                            // Tombol YES (Border Only)
                             OutlinedButton(
                                 onClick = {
                                     showDialog = false
@@ -473,7 +466,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                                 border = BorderStroke(1.dp, Color(0xFF001A3F)),
                                 shape = RoundedCornerShape(24.dp),
                                 modifier = Modifier
-                                    .weight(1f) // Memberi ukuran seimbang
+                                    .weight(1f)
                                     .height(48.dp)
                             ) {
                                 Text("Yes", color = Color(0xFF001A3F))
@@ -486,7 +479,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001A3F)),
                                 shape = RoundedCornerShape(24.dp),
                                 modifier = Modifier
-                                    .weight(1f) // Memberi ukuran seimbang
+                                    .weight(1f)
                                     .height(48.dp)
                             ) {
                                 Text("No", color = Color.White)
@@ -509,7 +502,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
         ) {
             Spacer(Modifier.height(40.dp))
 
-            // Display Waktu
             Text(
                 text = formatTime(remainingSeconds),
                 style = MaterialTheme.typography.displayMedium,
@@ -527,17 +519,14 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
 
             Spacer(Modifier.height(60.dp))
 
-            //Breathing Effect
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(250.dp)) {
                 if (isRunning && remainingSeconds > 0) {
-                    // Glow effect (Lingkaran Luar)
                     Box(
                         modifier = Modifier
                             .size(200.dp)
                             .graphicsLayer(scaleX = scale, scaleY = scale)
                             .background(Color(0xFFD1E5F0).copy(alpha = 0.2f), CircleShape)
                     )
-                    // Lingkaran Utama
                     Box(
                         modifier = Modifier
                             .size(150.dp)
@@ -555,7 +544,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                         )
                     }
                 } else {
-                    // Tampilan saat Pause atau Done
                     Box(
                         modifier = Modifier
                             .size(150.dp)
@@ -577,7 +565,6 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Button Play/Pause
                 Button(
                     onClick = { isRunning = !isRunning },
                     shape = CircleShape,
@@ -593,12 +580,11 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                     )
                 }
 
-                // Button Reset
                 IconButton(
                     onClick = {
                         remainingSeconds = initialSeconds
                         isRunning = false
-                        exoPlayer.seekTo(0) // Reset musik ke awal
+                        exoPlayer.seekTo(0)
                     },
                     modifier = Modifier
                         .size(88.dp)

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class TimerViewModel : ViewModel() {
 
-    private val _timerOptions = MutableStateFlow(listOf("05:00", "10:00", "15:00", "Set custom time"))
+    private val _timerOptions = MutableStateFlow(listOf("05:00", "10:00", "15:00", "Set Custom Time"))
     val timerOptions: StateFlow<List<String>> = _timerOptions.asStateFlow()
 
     private val _selectedOption = MutableStateFlow(timerOptions.value[0])
