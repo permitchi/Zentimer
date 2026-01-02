@@ -32,15 +32,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Opacity
-import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Water
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,12 +50,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -72,9 +72,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -85,7 +88,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.zentimer.ui.theme.ZentimerTheme
 import kotlinx.coroutines.delay
 import android.net.Uri
-import androidx.compose.material.icons.filled.RestartAlt
 
 val MyCustomFont = FontFamily(
     Font(R.font.poppins_medium, FontWeight.Normal),
@@ -94,6 +96,8 @@ val MyCustomFont = FontFamily(
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -107,10 +111,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNav() {
     val navController: NavHostController = rememberNavController()
+    val timerViewModel: TimerViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = "main") {
         composable("main") {
             StartScreen(
+                viewModel = timerViewModel,
                 onStartClick = { time, music ->
                     navController.navigate("timer/$time/$music")
                 },
@@ -130,18 +136,62 @@ fun AppNav() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StartScreen(onStartClick: (String, String) -> Unit) {
-    val timerOptions = listOf("05:00", "10:00", "15:00")
-    var selectedOption by remember { mutableStateOf(timerOptions[0]) }
-//    var expanded by remember { mutableStateOf(false) }
-    val musicOptions = listOf(
-        "Rain" to Icons.Default.Cloud,
-        "Waves" to Icons.Default.Water,
-        "Forest" to Icons.Default.Park,
-        "River" to Icons.Default.Opacity
-    )
-    var selectedMusicName by remember { mutableStateOf(musicOptions[0].first) }
+fun StartScreen(viewModel: TimerViewModel, onStartClick: (String, String) -> Unit) {
+    val timerOptions by viewModel.timerOptions.collectAsState()
+    val selectedOption by viewModel.selectedOption.collectAsState()
+    val showCustomTimeDialog by viewModel.showCustomTimeDialog.collectAsState()
+    val musicOptions by viewModel.musicOptions.collectAsState()
+    val selectedMusicName by viewModel.selectedMusicName.collectAsState()
     val scrollState = rememberScrollState()
+
+    if (showCustomTimeDialog) {
+        var customMinutes by remember { mutableStateOf("10") }
+        var customSeconds by remember { mutableStateOf("00") }
+
+        AlertDialog(
+            onDismissRequest = { viewModel.onCustomTimeDialogDismissed() },
+            title = { Text("Set Custom Time", fontFamily = MyCustomFont, fontWeight = FontWeight.Bold) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = customMinutes,
+                        onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) customMinutes = it },
+                        modifier = Modifier.width(80.dp),
+                        label = { Text("Mins") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    Text(" : ", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    OutlinedTextField(
+                        value = customSeconds,
+                        onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) customSeconds = it },
+                        modifier = Modifier.width(80.dp),
+                        label = { Text("Secs") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.onCustomTimeSet(customMinutes, customSeconds) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A9ACB))
+                ) {
+                    Text("Set", color = Color(0xFF001A3F))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { viewModel.onCustomTimeDialogDismissed() },
+                    border = BorderStroke(1.dp, Color(0xFF4A9ACB))
+                ) {
+                    Text("Cancel", color = Color(0xFF4A9ACB))
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = Color(0xFF001A3F),
@@ -187,7 +237,7 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                 val isSelected = (selectedOption == option)
 
                 Button(
-                    onClick = { selectedOption = option },
+                    onClick = { viewModel.onTimerOptionSelected(option) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
@@ -229,7 +279,7 @@ fun StartScreen(onStartClick: (String, String) -> Unit) {
                             val isSelected = selectedMusicName == name
 
                             Card(
-                                onClick = { selectedMusicName = name },
+                                onClick = { viewModel.onMusicSelected(name) },
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (isSelected) Color(0xFF4A9ACB) else Color(
@@ -316,8 +366,11 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
     }
 
     DisposableEffect(music) {
-        val musicName = music.lowercase()
-        val resourceId = context.resources.getIdentifier(musicName, "raw", context.packageName)
+        val musicFilename = when (music.lowercase()) {
+            "wave" -> "waves"
+            else -> music.lowercase()
+        }
+        val resourceId = context.resources.getIdentifier(musicFilename, "raw", context.packageName)
 
         if (resourceId != 0) {
             val uri = Uri.parse("${ContentResolver.SCHEME_ANDROID_RESOURCE}://${context.packageName}/$resourceId")
