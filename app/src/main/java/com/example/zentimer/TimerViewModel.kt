@@ -36,7 +36,7 @@ class TimerViewModel : ViewModel() {
     val showCustomTimeDialog: StateFlow<Boolean> = _showCustomTimeDialog.asStateFlow()
 
     fun onTimerOptionSelected(option: String) {
-        if (option == "Set custom time") {
+        if (option == "Set Custom Time") {
             _showCustomTimeDialog.value = true
         } else {
             _selectedOption.value = option
