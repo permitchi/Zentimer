@@ -441,7 +441,7 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                 title = {
                     // Judul rata tengah
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(text = "Stop Session", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF001A3F))
                     }
                 },
                 text = {
@@ -451,8 +451,10 @@ fun TimerScreen(time: String, music: String, onBackClick: () -> Unit) {
                     ) {
                         Text(
                             text = "Are you sure you want to stop this session?",
+                            color = Color(0xFF001A3F),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 24.dp)
+
                         )
 
                         // Row untuk menempatkan tombol berdampingan di tengah
